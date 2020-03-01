@@ -4,7 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
-  #  runtime: shiny
+    runtime: shiny
     
     # params:
     #   select_star:
@@ -23,6 +23,7 @@ library(insol)
 library(plotly)
 library(data.table)
 library(lubridate)
+library(DT)
 
 rm(list=ls())
 mydata <- fread("./star-data.csv")
@@ -42,19 +43,29 @@ my_star <- mydata %>% distinct(star_name)
 ## Column {data-width=250}
 
 
-### Select Star Name
-```{r}
-# selectInput(id = "select_star",label="Select Star Name",choices=my_star)
+### 
+```{r text-imput}
+
+ selectInput(inputId ="DropDownStar",label="Please Enter Star Name",
+              choices =my_star$star_name)
+# valueBox(my_star$star_name)
+# textInput(inputId = "TextSAmple",label="Star Name")
+          
 ```
 
-### Select Band
+### 
 
-```{r}
+```{r Imput Band}
+# textInput(inputId = "TextBand",label="Enter Band")
+selectInput(inputId ="DropDownBand",label="Please make Selection",
+              choices =my_band$band)
 ```
 
-### Select Year
+### 
 ```{r}
-
+# textInput(inputId = "TextYear",label="Enter Year")
+selectInput(inputId ="DropDownYear",label="Select a  Year",
+              choices =my_year$Year)
 ```
 ```{r}
  alf_ori <- mydata %>% filter(Year =="2019" & band=="Vis." & star_name=="R AQL") 
@@ -77,4 +88,5 @@ my_star <- mydata %>% distinct(star_name)
 alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
   layout(title = "R AQL 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
 ```
+
 
