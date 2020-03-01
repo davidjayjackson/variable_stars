@@ -1,0 +1,78 @@
+---
+title: "Betelgeuse: Varable Star Validation Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+  #  runtime: shiny
+    
+    params:
+      select_star:
+        label: "Select Star"
+        value: distinct(star_name)
+        input: selectInput
+        sep: ""
+    
+---
+
+```{r global, include=FALSE}
+library(flexdashboard)
+library(rsconnect)
+library(tidyverse)
+library(insol)
+library(plotly)
+library(data.table)
+library(lubridate)
+
+rm(list=ls())
+mydata <- fread("./star-data.csv")
+mydata <- janitor::clean_names(mydata)
+mydata$star_name <- toupper(mydata$star_name)
+mydata$Ymd <- JD(mydata$jd,inverse = TRUE)
+mydata$Ymd <- as.Date(mydata$Ymd)
+mydata$Year <- year(mydata$Ymd)
+mydata$Month <- month(mydata$Ymd)
+mydata$magnitude <- as.numeric( gsub("<","", mydata$magnitude) ) + 0.1
+my_year <- mydata %>% distinct(Year)
+my_band <- mydata %>% distinct(band)
+my_star <- mydata %>% distinct(star_name)
+```
+## Column {data-width=250}
+
+
+### Select Star Name
+```{r}
+selectInput(id = "select_star",label="Select Star Name",choices=my_star)
+```
+
+### Select Band
+
+```{r}
+```
+
+### Select Year
+```{r}
+
+```
+```{r}
+ alf_ori <- mydata %>% filter(Year =="2019" & band=="Vis." & star_name==input$select_star) %>% select(star_name,Ymd,Year,Month,band,magnitude)
+```
+## Column {data-width=750}
+
+
+### Histogram of Magnitudes
+
+```{r}
+
+ alf_ori %>% plot_ly() %>% add_histogram(x=~magnitude) %>%
+    layout(title = "Z AUR 2019: Histogram")
+
+```
+
+### Yearly Box Plots of Magnitudes
+
+```{r}
+alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
+  layout(title = "Z AUR 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
+```
+
