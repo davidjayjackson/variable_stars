@@ -6,13 +6,13 @@ output:
     vertical_layout: fill
   #  runtime: shiny
     
-    params:
-      select_star:
-        label: "Select Star"
-        value: distinct(star_name)
-        input: selectInput
-        sep: ""
-    
+    # params:
+    #   select_star:
+    #     label: "Select Star"
+    #     value: distinct(star_name)
+    #     input: selectInput
+    #     sep: ""
+    # 
 ---
 
 ```{r global, include=FALSE}
@@ -32,17 +32,19 @@ mydata$Ymd <- JD(mydata$jd,inverse = TRUE)
 mydata$Ymd <- as.Date(mydata$Ymd)
 mydata$Year <- year(mydata$Ymd)
 mydata$Month <- month(mydata$Ymd)
+mydata <- mydata %>% select(star_name,Ymd,Year,Month,band,magnitude)
 mydata$magnitude <- as.numeric( gsub("<","", mydata$magnitude) ) + 0.1
 my_year <- mydata %>% distinct(Year)
 my_band <- mydata %>% distinct(band)
 my_star <- mydata %>% distinct(star_name)
+
 ```
 ## Column {data-width=250}
 
 
 ### Select Star Name
 ```{r}
-selectInput(id = "select_star",label="Select Star Name",choices=my_star)
+# selectInput(id = "select_star",label="Select Star Name",choices=my_star)
 ```
 
 ### Select Band
@@ -55,7 +57,7 @@ selectInput(id = "select_star",label="Select Star Name",choices=my_star)
 
 ```
 ```{r}
- alf_ori <- mydata %>% filter(Year =="2019" & band=="Vis." & star_name==input$select_star) %>% select(star_name,Ymd,Year,Month,band,magnitude)
+ alf_ori <- mydata %>% filter(Year =="2019" & band=="Vis." & star_name=="R AQL") 
 ```
 ## Column {data-width=750}
 
@@ -65,7 +67,7 @@ selectInput(id = "select_star",label="Select Star Name",choices=my_star)
 ```{r}
 
  alf_ori %>% plot_ly() %>% add_histogram(x=~magnitude) %>%
-    layout(title = "Z AUR 2019: Histogram")
+    layout(title = "R AQL 2019: Histogram")
 
 ```
 
@@ -73,6 +75,6 @@ selectInput(id = "select_star",label="Select Star Name",choices=my_star)
 
 ```{r}
 alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
-  layout(title = "Z AUR 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
+  layout(title = "R AQL 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
 ```
 
