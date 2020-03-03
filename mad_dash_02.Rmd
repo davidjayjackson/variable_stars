@@ -3,7 +3,7 @@ title: "Betelgeuse: Varable Star Validation Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
-    vertical_layout: fill
+    vertical_layout: scroll
     runtime: shiny
     
     # params:
@@ -36,11 +36,16 @@ mydata$Month <- month(mydata$Ymd)
 mydata <- mydata %>% select(star_name,Ymd,Year,Month,band,magnitude)
 mydata$magnitude <- as.numeric( gsub("<","", mydata$magnitude) ) + 0.1
 my_year <- mydata %>% distinct(Year)
+my_year <- as.list(my_year)
 my_band <- mydata %>% distinct(band)
+my_band <- as.list(my_band)
 my_star <- mydata %>% distinct(star_name)
+my_star <- as.list(my_star)
 
 ```
-## Column {data-width=250}
+# Home
+
+## Column {.sidebar}
 
 
 ### 
@@ -50,6 +55,7 @@ my_star <- mydata %>% distinct(star_name)
               choices =my_star$star_name)
 # valueBox(my_star$star_name)
 # textInput(inputId = "TextSAmple",label="Star Name")
+renderPrint(input$DropDownStar)
           
 ```
 
@@ -68,25 +74,50 @@ selectInput(inputId ="DropDownYear",label="Select a  Year",
               choices =my_year$Year)
 ```
 ```{r}
- alf_ori <- mydata %>% filter(Year =="2019" & band=="Vis." & star_name=="R AQL") 
+
+ alf_ori <- mydata %>% filter(Year ==2014 & band=="Vis." & star_name=="R AQL") 
 ```
+
+
 ## Column {data-width=750}
-
-
-### Histogram of Magnitudes
 
 ```{r}
 
- alf_ori %>% plot_ly() %>% add_histogram(x=~magnitude) %>%
+ renderPlotly(
+   mydata %>% 
+     plot_ly() %>% add_histogram(x=~magnitude) %>%
     layout(title = "R AQL 2019: Histogram")
+ )
 
 ```
 
 ### Yearly Box Plots of Magnitudes
 
 ```{r}
+
 alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
   layout(title = "R AQL 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
+
 ```
+
+
+### Data Tables
+
+```{r}
+just.stats <- mydata %>% group_by(Month=floor_date(Ymd, "month")) %>%
+  summarize( Mean = round(mean(magnitude),digits=1),
+             Brighter = round(Mean -1,digits = 1),
+             Fainter = round(Mean +1,digits= 1))
+
+# luifrancgom @ Slack
+
+# just.stats <- colnames(just.stats) <- c("Date","Mean","Brighter","Fainter")
+just.stats %>%
+  mutate(Verify = case_when(
+        (Brighter <  Mean -1) | (Fainter > Mean + 1) ~ "Yes",TRUE ~ "No")) %>%
+        filter(Verify =="Yes") %>% DT::datatable()
+
+```
+
 
 
