@@ -75,7 +75,7 @@ selectInput(inputId ="DropDownYear",label="Select a  Year",
 ```
 ```{r}
 
- alf_ori <- mydata %>% filter(Year ==2014 & band=="Vis." & star_name=="R AQL") 
+ alf_ori <- mydata %>% filter(Year >=2000 & band=="Vis." & star_name=="R AQL") 
 ```
 
 
@@ -84,7 +84,7 @@ selectInput(inputId ="DropDownYear",label="Select a  Year",
 ```{r}
 
  renderPlotly(
-   mydata %>% 
+   alf_ori %>% 
      plot_ly() %>% add_histogram(x=~magnitude) %>%
     layout(title = "R AQL 2019: Histogram")
  )
@@ -100,23 +100,35 @@ alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
 
 ```
 
+# Good Stuff
 
-### Data Tables
+## Column {data-width=750}
+
+### Just the Stats
 
 ```{r}
-just.stats <- mydata %>% group_by(Month=floor_date(Ymd, "month")) %>%
+just.stats <- alf_ori %>% group_by(Month=floor_date(Ymd, "month")) %>%
   summarize( Mean = round(mean(magnitude),digits=1),
              Brighter = round(Mean -1,digits = 1),
-             Fainter = round(Mean +1,digits= 1))
+             Fainter = round(Mean +1,digits= 1),
+             Obs = n())
 
 # luifrancgom @ Slack
 
 # just.stats <- colnames(just.stats) <- c("Date","Mean","Brighter","Fainter")
-just.stats %>%
+just.stats   %>%
   mutate(Verify = case_when(
         (Brighter <  Mean -1) | (Fainter > Mean + 1) ~ "Yes",TRUE ~ "No")) %>%
         filter(Verify =="Yes") %>% DT::datatable()
 
+```
+
+## Plot of Observations that need to be verfied
+
+```{r}
+just.stats %>% plot_ly(x=~Month,y=~Mean,name="Mean",type="scatter",mode="markers") %>%
+        add_lines(x=~Month,y=~Brighter,name="Brighter") %>%
+        add_lines(x=~Month,y=~Fainter,name="Fainter")
 ```
 
 
