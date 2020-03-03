@@ -72,6 +72,8 @@ selectInput(inputId ="DropDownBand",label="Please make Selection",
 # textInput(inputId = "TextYear",label="Enter Year")
 selectInput(inputId ="DropDownYear",label="Select a  Year",
               choices =my_year$Year)
+renderPrint(min(my_year$Year))
+renderPrint(max(my_year$Year))
 ```
 ```{r}
 

@@ -36,3 +36,17 @@ just.stats$Verify <- ifelse(just.stats$Brighter < just.stats$Mean -1 | just.stat
 just.stats %>% filter(Month >="2019-01-01") %>% plot_ly %>% add_lines(x=~Month,y=~Mean,name="Mean") %>%
   add_lines(x=~Month,y=~Brighter,name="Brighter") %>%
   add_lines(x=~Month,y=~Fainter,name="Fainter")
+
+
+
+just.stats <- mydata %>% 
+  group_by(Month=floor_date(Ymd, "month")) %>%
+  summarize(Mean     = round(mean(magnitude),digits=1),
+            Brighter = round(Mean -1,digits = 1),
+            Fainter  = round(Mean +1,digits= 1))
+
+just.df <- just.stats %>%
+  mutate(Verify = case_when(
+        (Brighter <  Mean -1) | (Fainter > Mean + 1) ~ "Yes",TRUE ~ "No")) %>%
+        filter(Verify =="Yes")
+  
