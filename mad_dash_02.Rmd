@@ -1,0 +1,137 @@
+---
+title: "Betelgeuse: Varable Star Validation Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+    runtime: shiny
+    
+    # params:
+    #   select_star:
+    #     label: "Select Star"
+    #     value: distinct(star_name)
+    #     input: selectInput
+    #     sep: ""
+    # 
+---
+
+```{r global, include=FALSE}
+library(flexdashboard)
+library(rsconnect)
+library(tidyverse)
+library(insol)
+library(plotly)
+library(data.table)
+library(lubridate)
+library(DT)
+
+rm(list=ls())
+mydata <- fread("./star-data.csv")
+mydata <- janitor::clean_names(mydata)
+mydata$star_name <- toupper(mydata$star_name)
+mydata$Ymd <- JD(mydata$jd,inverse = TRUE)
+mydata$Ymd <- as.Date(mydata$Ymd)
+mydata$Year <- year(mydata$Ymd)
+mydata$Month <- month(mydata$Ymd)
+mydata <- mydata %>% select(star_name,Ymd,Year,Month,band,magnitude)
+mydata$magnitude <- as.numeric( gsub("<","", mydata$magnitude) ) + 0.1
+my_year <- mydata %>% distinct(Year)
+my_year <- as.list(my_year)
+my_band <- mydata %>% distinct(band)
+my_band <- as.list(my_band)
+my_star <- mydata %>% distinct(star_name)
+my_star <- as.list(my_star)
+
+```
+# Home
+
+## Column {.sidebar}
+
+
+### 
+```{r text-imput}
+
+ selectInput(inputId ="DropDownStar",label="Please Enter Star Name",
+              choices =my_star$star_name)
+# valueBox(my_star$star_name)
+# textInput(inputId = "TextSAmple",label="Star Name")
+renderPrint(input$DropDownStar)
+          
+```
+
+### 
+
+```{r Imput Band}
+# textInput(inputId = "TextBand",label="Enter Band")
+selectInput(inputId ="DropDownBand",label="Please make Selection",
+              choices =my_band$band)
+```
+
+### 
+```{r}
+# textInput(inputId = "TextYear",label="Enter Year")
+selectInput(inputId ="DropDownYear",label="Select a  Year",
+              choices =my_year$Year)
+renderPrint(min(my_year$Year))
+renderPrint(max(my_year$Year))
+```
+```{r}
+
+ alf_ori <- mydata %>% filter(Year >=2000 & band=="Vis." & star_name=="R AQL") 
+```
+
+
+## Column {data-width=750}
+
+```{r}
+
+ renderPlotly(
+   alf_ori %>% 
+     plot_ly() %>% add_histogram(x=~magnitude) %>%
+    layout(title = "R AQL 2019: Histogram")
+ )
+
+```
+
+### Yearly Box Plots of Magnitudes
+
+```{r}
+
+alf_ori %>% plot_ly() %>% add_boxplot(x=~Month,y=~magnitude) %>%
+  layout(title = "R AQL 2019: Monthly Boxplots") %>% layout(yaxis = list(autorange = "reversed"))
+
+```
+
+# Good Stuff
+
+## Column {data-width=750}
+
+### Just the Stats
+
+```{r}
+just.stats <- alf_ori %>% group_by(Month=floor_date(Ymd, "month")) %>%
+  summarize( Mean = round(mean(magnitude),digits=1),
+             Brighter = round(Mean -1,digits = 1),
+             Fainter = round(Mean +1,digits= 1),
+             Obs = n())
+
+# luifrancgom @ Slack
+
+# just.stats <- colnames(just.stats) <- c("Date","Mean","Brighter","Fainter")
+just.stats   %>%
+  mutate(Verify = case_when(
+        (Brighter <  Mean -1) | (Fainter > Mean + 1) ~ "Yes",TRUE ~ "No")) %>%
+        filter(Verify =="Yes") %>% DT::datatable()
+
+```
+
+### Plot of Observations that need to be verfied
+
+```{r}
+just.stats %>% plot_ly(x=~Month,y=~Mean,name="Mean",type="scatter",mode="markers") %>%
+        add_lines(x=~Month,y=~Brighter,name="Brighter") %>%
+        add_lines(x=~Month,y=~Fainter,name="Fainter")
+```
+
+
+
