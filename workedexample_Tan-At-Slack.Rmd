@@ -14,6 +14,7 @@ library(tidyverse)
 library(plotly)
 library(shiny) # This may or may not be required - I just like the code autocomplete
 library(DT) # This builds a reactive datatable. It's probably the most common HTML table package.
+library(lubridate)
 ```
 
 ```{r}
@@ -46,10 +47,13 @@ mydata$magnitude <- as.numeric( gsub("<","", mydata$magnitude) ) + 0.1
 # You can return multiple outputs from a code chunk :)
 
 selectInput(inputId ="DropDownStar",label="Please Enter Star Name",
-              choices = unique(mydata$star_name))
+              choices = unique(mydata$star_name),selected="AQ AND")
 
 selectInput(inputId ="DropDownBand",label="Please Select Band",
-              choices =unique(mydata$band))
+              choices =unique(mydata$band),selected="Vis.")
+
+selectInput(inputId ="DropDownYear",label="Please Select Year",
+              choices =unique(mydata$Year))
 
 ```
 
@@ -71,7 +75,7 @@ selectInput(inputId ="DropDownBand",label="Please Select Band",
 
 alf_ori <-reactive({
 mydata %>% 
-    filter(star_name == input$DropDownStar & band == input$DropDownBand)
+    filter(star_name == input$DropDownStar & band == input$DropDownBand & Year >=input$DropDownYear)
 })
 ```
 
@@ -102,6 +106,14 @@ br()
 
 renderDT({
   alf_ori() %>% 
+    group_by(Month=floor_date(Ymd, "month")) %>%
+  summarize( Mean = round(mean(magnitude),digits=1),
+             Brighter = round(Mean -1,digits = 1),
+             Fainter = round(Mean +1,digits= 1),
+             Obs = n()) %>% 
+            mutate(Verify = case_when(
+        (Brighter <  Mean -1) | (Fainter > Mean + 1) ~ "Yes",TRUE ~ "No")) %>%
+        filter(Verify =="Yes") %>%
     datatable(rownames = FALSE)
 })
 ```
